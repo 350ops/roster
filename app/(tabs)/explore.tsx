@@ -1,13 +1,16 @@
-import { StyleSheet, View, Dimensions, Text } from 'react-native';
-import { MapView, Polyline, Marker } from '@/components/NativeMapView';
-import { GlassView } from 'expo-glass-effect';
-import { useFlights } from '@/context/FlightContext';
+import AirportInfoModal from '@/components/AirportInfoModal';
+import { MapView, Marker, Polyline } from '@/components/NativeMapView';
 import { AIRPORT_COORDINATES } from '@/constants/airports';
-import { useEffect, useRef } from 'react';
+import { useFlights } from '@/context/FlightContext';
+import { GlassView } from 'expo-glass-effect';
+import { useEffect, useRef, useState } from 'react';
+import { Dimensions, StyleSheet, Text, View } from 'react-native';
 
 export default function ExploreScreen() {
   const { flights, selectedDestination, setSelectedDestination } = useFlights();
   const mapRef = useRef<any>(null);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [infoAirportCode, setInfoAirportCode] = useState<string | null>(null);
 
   // Animate to selected destination when it changes
   useEffect(() => {
@@ -64,11 +67,19 @@ export default function ExploreScreen() {
                 coordinate={originCoords}
                 title={flight.origin}
                 pinColor="blue"
+                onPress={() => {
+                  setInfoAirportCode(flight.origin);
+                  setInfoModalVisible(true);
+                }}
               />
               <Marker
                 coordinate={destCoords}
                 title={flight.destination}
                 pinColor="blue"
+                onPress={() => {
+                  setInfoAirportCode(flight.destination);
+                  setInfoModalVisible(true);
+                }}
               />
             </View>
           );
@@ -91,6 +102,12 @@ export default function ExploreScreen() {
           <Text style={styles.overlaySubtext}>Upload a PDF in the Home tab.</Text>
         </GlassView>
       )}
+
+      <AirportInfoModal
+        visible={infoModalVisible}
+        airportCode={infoAirportCode}
+        onClose={() => setInfoModalVisible(false)}
+      />
     </View>
   );
 }

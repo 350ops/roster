@@ -1,4 +1,6 @@
 import MapView from '@/components/NativeMapView';
+import { Weather, WeatherAtLocation } from '@/components/Weather';
+import { getWeather } from '@/tools/weather';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import { GlassContainer, GlassView } from 'expo-glass-effect';
@@ -32,6 +34,8 @@ export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [modalVisible, setModalVisible] = useState(true);
+  const [weatherData, setWeatherData] = useState<WeatherAtLocation | null>(null);
+  const [showWeather, setShowWeather] = useState(false);
 
   // Animation for modal
   const modalY = useRef(new Animated.Value(SCREEN_HEIGHT * 0.35)).current;
@@ -105,6 +109,20 @@ export default function HomeScreen() {
     router.push('/(tabs)/explore');
   };
 
+  const handleMapPress = async (e: any) => {
+    const { latitude, longitude } = e.nativeEvent.coordinate;
+    try {
+      // @ts-ignore - getWeather is a tool from AI SDK
+      const result = await getWeather.execute({ latitude, longitude });
+      if (result && !result.error) {
+        setWeatherData(result);
+        setShowWeather(true);
+      }
+    } catch (error) {
+      console.error('Error fetching weather:', error);
+    }
+  };
+
   const pickDocument = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
@@ -125,6 +143,12 @@ export default function HomeScreen() {
   };
 
   const uploadFile = async (file: any) => {
+    console.log('📄 File to upload:', {
+      name: file.name,
+      size: file.size,
+      mimeType: file.mimeType,
+      uri: file.uri?.substring(0, 50) + '...'
+    });
     setLoading(true);
 
     try {
@@ -135,12 +159,11 @@ export default function HomeScreen() {
         type: file.mimeType || 'application/pdf',
       } as any);
 
+      console.log('🚀 Uploading to:', API_URL);
+
       const response = await fetch(API_URL, {
         method: 'POST',
         body: formData,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
       });
 
       if (!response.ok) {
@@ -184,7 +207,21 @@ export default function HomeScreen() {
         showsTraffic={false}
         showsIndoors={false}
         showsBuildings={false}
+        onPress={handleMapPress}
       />
+
+      {/* Weather Overlay */}
+      {showWeather && weatherData && (
+        <View style={styles.weatherOverlay}>
+          <TouchableOpacity
+            style={styles.closeWeather}
+            onPress={() => setShowWeather(false)}
+          >
+            <Ionicons name="close" size={24} color="white" />
+          </TouchableOpacity>
+          <Weather weatherAtLocation={weatherData} />
+        </View>
+      )}
 
       {/* Top Controls with Glass Effect */}
       <GlassContainer style={styles.topControls} spacing={10}>
@@ -520,5 +557,21 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: '#666',
     marginTop: 1,
+  },
+  weatherOverlay: {
+    position: 'absolute',
+    top: 120,
+    left: 20,
+    right: 20,
+    zIndex: 100,
+  },
+  closeWeather: {
+    position: 'absolute',
+    top: -10,
+    right: -10,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 15,
+    padding: 5,
+    zIndex: 101,
   },
 });

@@ -33,3 +33,52 @@ export const AIRPORT_COORDINATES: Record<string, { latitude: number; longitude: 
     DAC: { latitude: 23.8433, longitude: 90.4054 },
     JED: { latitude: 21.6796, longitude: 39.1565 },
 };
+
+export const AIRPORT_ICAO: Record<string, string> = {
+    DOH: 'OTHH',
+    BUD: 'LHBP',
+    FRA: 'EDDF',
+    HAM: 'EDDH',
+    SVO: 'UUEE',
+    MAD: 'LEMD',
+    GOX: 'VAGO',
+    CPT: 'FACT',
+    DPS: 'WADD',
+    LHR: 'EGLL',
+    DXB: 'OMDB',
+    RUH: 'OERK',
+    CAI: 'HECA',
+    AKL: 'NZAA',
+    DUB: 'EIDW',
+    ARN: 'ESSA',
+    LHE: 'OPLA',
+    WAW: 'EPWA',
+    DEL: 'VIDP',
+    YUL: 'CYUL',
+    MUC: 'EDDM',
+    TUN: 'DTTA',
+    KUL: 'WMKK',
+    BNE: 'YBBN',
+    BER: 'EDDB',
+    MLE: 'VRMM',
+    CKG: 'ZUCK',
+    ATL: 'KATL',
+    AUH: 'OMAA',
+    CMB: 'VCBI',
+    DAC: 'VGHS',
+    JED: 'OEJN',
+};
+
+export const AIRPORT_INFO: Record<string, { description: string; images: any[] }> = {
+    CKG: {
+        description: "Chongqing Jiangbei International Airport is the primary airport serving Chongqing, China. It is a major hub for western China and features modern facilities across three terminals.",
+        images: [
+            require('../assets/images/airports/ckg1.jpeg'),
+            require('../assets/images/airports/ckg2.jpg'),
+        ]
+    },
+    DOH: {
+        description: "Hamad International Airport is the international airport for Doha, the capital city of Qatar. It is known for its architecture and is a global hub for Qatar Airways.",
+        images: []
+    }
+};
