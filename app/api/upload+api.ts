@@ -5,9 +5,14 @@ export const runtime = 'nodejs';
 // Note: pdf-parse requires Node.js runtime, not Edge runtime
 let pdf: any;
 try {
-  pdf = require('pdf-parse');
+    // We use a dynamic require to prevent Metro from trying to bundle this for native
+    // The 'if' check with a string constant helps hide it from some static analyzers
+    if (typeof window === 'undefined') {
+        const pdfModuleName = 'pdf-parse';
+        pdf = require(pdfModuleName);
+    }
 } catch (error) {
-  console.error('Failed to load pdf-parse:', error);
+    console.error('Failed to load pdf-parse:', error);
 }
 
 // Flight type
@@ -152,8 +157,8 @@ export async function POST(request: Request): Promise<Response> {
     try {
         // Check if pdf-parse is available
         if (!pdf) {
-            return Response.json({ 
-                error: 'PDF parsing not available. Please use the Flask server or configure Node.js runtime.' 
+            return Response.json({
+                error: 'PDF parsing not available. Please use the Flask server or configure Node.js runtime.'
             }, { status: 500 });
         }
 
