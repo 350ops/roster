@@ -1,28 +1,27 @@
-import {
-  StyleSheet,
-  TouchableOpacity,
-  View,
-  Text,
-  TextInput,
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  Keyboard,
-  Modal,
-  Dimensions,
-  PanResponder,
-  Animated,
-} from 'react-native';
-import MapView from 'react-native-maps';
+import MapView from '@/components/NativeMapView';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import { useMemo, useState, useRef } from 'react';
-import { GlassView, GlassContainer } from 'expo-glass-effect';
+import { GlassContainer, GlassView } from 'expo-glass-effect';
 import { useRouter } from 'expo-router';
+import { useMemo, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Animated,
+  Dimensions,
+  Keyboard,
+  PanResponder,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from 'react-native';
 
-import { useFlights } from '@/context/FlightContext';
 import { AIRPORT_COORDINATES } from '@/constants/airports';
 import { API_URL } from '@/constants/config';
+import { useFlights } from '@/context/FlightContext';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
@@ -502,7 +501,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.6)',
   },
   flightIcon: {
-    width: 36, 
+    width: 36,
     borderRadius: 18,
     backgroundColor: 'rgba(255, 122, 0, 0.2)',
     alignItems: 'center',
