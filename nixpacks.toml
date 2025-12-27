@@ -1,0 +1,15 @@
+[phases.setup]
+# Ensure both Node (for Expo app) and Python (for Flask backend) are available
+# python311Full includes pip
+nixPkgs = ["nodejs_18", "python311Full"]
+
+[phases.install]
+cmds = [
+  "python3 -m pip install -r backend/requirements.txt",
+  # Keep npm install if needed for the Expo app; harmless if already run by Nixpacks
+  "npm ci"
+]
+
+[start]
+cmd = "cd backend && python3 server.py"
+
