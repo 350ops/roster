@@ -5,9 +5,9 @@ const config = getDefaultConfig(__dirname);
 
 // Exclude these directories from being watched or resolved by Metro
 config.resolver.blockList = [
-    /backend\/.*/,
-    /\.venv\/.*/,
-    /dist\/.*/,
+    /.*\/backend\/.*/,
+    /.*\/.venv\/.*/,
+    /^dist\/.*/, // Anchored to only target root dist
 ];
 
 // pdf-parse is a Node-only module. We mock it for native platforms
