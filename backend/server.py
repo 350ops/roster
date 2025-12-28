@@ -1,15 +1,22 @@
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from werkzeug.utils import secure_filename
 import os
 import pdf_flights_to_csv
-import pdfplumber
-import tempfile
-
 import roster
+import uuid
+
+# Get path relative to the script location
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(SCRIPT_DIR, "toconvert")
+
+# Ensure upload folder exists
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = Flask(__name__)
 CORS(app)
+
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -22,11 +29,16 @@ def upload_file():
         return jsonify({'error': 'No selected file'}), 400
         
     if file:
-        # Save to a temporary file
-        fd, path = tempfile.mkstemp(suffix=".pdf")
+        # Generate unique filename to prevent collisions
+        original_ext = os.path.splitext(file.filename)[1]
+        if not original_ext:
+            original_ext = ".pdf"
+        unique_filename = f"{uuid.uuid4()}{original_ext}"
+        path = os.path.join(UPLOAD_FOLDER, unique_filename)
+        
         try:
-            with os.fdopen(fd, 'wb') as tmp:
-                file.save(tmp)
+            file.save(path)
+            print(f"File saved to: {path}")
             
             # Try First Extractor (Standard Report)
             flights = pdf_flights_to_csv.extract_flights(path)
@@ -44,10 +56,13 @@ def upload_file():
         except Exception as e:
             return jsonify({'error': str(e)}), 500
         finally:
-            # Clean up
+             # Clean up to prevent disk fill-up on Railway
             if os.path.exists(path):
-                os.remove(path)
-
+                try:
+                    os.remove(path)
+                    print(f"Cleaned up file: {path}")
+                except Exception as cleanup_error:
+                    print(f"Error cleaning up file {path}: {cleanup_error}")
 if __name__ == '__main__':
     # Get port from environment variable (for production) or use 5002 for local dev
     port = int(os.environ.get('PORT', 5002))
