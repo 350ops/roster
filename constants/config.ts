@@ -15,18 +15,18 @@ import Constants from 'expo-constants';
 export const getApiUrl = (): string => {
   const isDev = __DEV__;
 
+  if (isDev) {
+    const host = Constants.expoConfig?.hostUri?.split(':')[0];
+    const port = Constants.expoConfig?.hostUri?.split(':')[1] || '8081';
+    const localUrl = `http://${host}:${port}`;
+    console.log('💻 Using Local Expo API:', localUrl);
+    return `${localUrl}/api/upload`;
+  }
+
   // Priority 1: Environment Variable (Standard Expo way)
   const envUrl = process.env.EXPO_PUBLIC_API_URL;
   if (envUrl) {
-    if (isDev) console.log('🌐 Using API_URL from ENV:', envUrl);
     return `${envUrl}/upload`;
-  }
-
-  // Priority 2: hardcoded Railway URL (The one we know works)
-  const railwayUrl = "https://roster-production-7e0a.up.railway.app";
-  if (isDev) {
-    console.log('🚀 Using Railway API (Development):', railwayUrl);
-    return `${railwayUrl}/upload`;
   }
 
   // Priority 3: app.json extra

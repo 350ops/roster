@@ -9,7 +9,9 @@ try {
     // The 'if' check with a string constant helps hide it from some static analyzers
     if (typeof window === 'undefined') {
         const pdfModuleName = 'pdf-parse';
-        pdf = require(pdfModuleName);
+        // v1.1.1 usually exports the function directly
+        const pdfModule = require(pdfModuleName);
+        pdf = pdfModule.default || pdfModule;
     }
 } catch (error) {
     console.error('Failed to load pdf-parse:', error);
@@ -153,6 +155,124 @@ function extractFlightsFromRoster(text: string): Flight[] {
     });
 }
 
+// Parse EASA FCL .050 Logbook format
+// Format: Date (DD/MM/YY) | Dep | Time | Arr | Time | Model | Reg | ...
+function extractFlightsFromEASALogbook(text: string): Flight[] {
+    const flights: Flight[] = [];
+    const EASA_DATE_REGEX = /^\d{2}\/\d{2}\/\d{2}$/;
+
+    // Split into lines
+    const lines = text.split('\n');
+
+    for (const line of lines) {
+        const parts = line.trim().split(/\s+/);
+
+        // Need at least: Date, Dep, Time, Arr, Time, Model, Reg (7 parts)
+        if (parts.length < 7) continue;
+
+        // Check if line starts with Date DD/MM/YY
+        if (!EASA_DATE_REGEX.test(parts[0])) continue;
+
+        try {
+            const dateStr = parts[0]; // 31/01/14
+            const origin = parts[1];  // MLE
+            const depTime = parts[2]; // 19:00
+            const dest = parts[3];    // XIY
+            const arrTime = parts[4]; // 21:00
+            const model = parts[5];   // A320
+            const reg = parts[6];     // 8Q-IAN
+
+            // Validate times and places look right
+            if (!/^\d{2}:\d{2}$/.test(depTime) || !/^\d{2}:\d{2}$/.test(arrTime)) continue;
+            if (!/^[A-Z0-9]{3,4}$/.test(origin) || !/^[A-Z0-9]{3,4}$/.test(dest)) continue;
+
+            // Parse Date: 31/01/14 -> 2014-01-31
+            const [d, m, y] = dateStr.split('/');
+            const fullYear = parseInt(y, 10) + 2000; // Assume 20xx
+            const isoDate = `${fullYear}-${m}-${d}`;
+
+            // Calculate Block Time
+            const [depH, depM] = depTime.split(':').map(Number);
+            const [arrH, arrM] = arrTime.split(':').map(Number);
+
+            let depMinutes = depH * 60 + depM;
+            let arrMinutes = arrH * 60 + arrM;
+
+            // Handle date crossover (Arrival next day)
+            if (arrMinutes < depMinutes) {
+                arrMinutes += 24 * 60;
+            }
+
+            const diffMinutes = arrMinutes - depMinutes;
+            const hours = Math.floor(diffMinutes / 60);
+            const minutes = diffMinutes % 60;
+            const blockHours = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+            flights.push({
+                date: isoDate,
+                origin,
+                destination: dest,
+                block_hours: blockHours,
+                flight: reg // Use Registration as flight number since none is provided
+            });
+
+        } catch (e) {
+            console.log('Error parsing EASA line:', line, e);
+        }
+    }
+
+    return flights;
+}
+
+// Parse "Duty Hrs Statistics Report" format
+// Example: 22-May-202418:11 \n 713/DOH-IAHA7-AND18:11
+function extractFlightsFromDutyStats(text: string): Flight[] {
+    const flights: Flight[] = [];
+    const DUTY_DATE_REGEX = /^(\d{2}-[A-Za-z]{3}-\d{4})/;
+    // Matches 713/DOH-IAH or 620/DOH-LHE
+    const FLIGHT_PATTERN = /(?<flight>\d{3,4})\/(?<origin>[A-Z]{3})-(?<destination>[A-Z]{3})/g;
+
+    let currentDate: string | null = null;
+
+    const lines = text.split('\n');
+    for (const line of lines) {
+        const trimmed = line.trim();
+
+        // 1. Check for Date at start of line
+        const dateMatch = trimmed.match(DUTY_DATE_REGEX);
+        if (dateMatch) {
+            try {
+                const dateRaw = dateMatch[1];
+                const parsed = new Date(dateRaw);
+                if (!isNaN(parsed.getTime())) {
+                    currentDate = parsed.toISOString().split('T')[0];
+                }
+            } catch (e) {
+                // Ignore invalid dates
+            }
+        }
+
+        // 2. Scan for flights in this line
+        // Note: A single line can have multiple flights, e.g. "620/DOH-LHE,621/LHE-DOH..."
+        if (currentDate) {
+            const matches = trimmed.matchAll(FLIGHT_PATTERN);
+            for (const match of matches) {
+                if (match.groups) {
+                    flights.push({
+                        date: currentDate,
+                        origin: match.groups.origin,
+                        destination: match.groups.destination,
+                        flight: match.groups.flight,
+                        block_hours: "00:00" // Placeholder, as strict block time isn't clear in this report
+                    });
+                }
+            }
+        }
+    }
+
+    return flights;
+}
+
 export async function POST(request: Request): Promise<Response> {
     try {
         // Check if pdf-parse is available
@@ -178,12 +298,22 @@ export async function POST(request: Request): Promise<Response> {
         const pdfData = await pdf(buffer);
         const text = pdfData.text;
 
-        // Try statistics report format first
+        // Try statistics report format first (original)
         let flights = extractFlightsFromStatisticsReport(text);
 
         // If no flights found, try roster format
         if (flights.length === 0) {
             flights = extractFlightsFromRoster(text);
+        }
+
+        // If still no flights, try EASA logbook format
+        if (flights.length === 0) {
+            flights = extractFlightsFromEASALogbook(text);
+        }
+
+        // If still no flights, try Duty Stats format
+        if (flights.length === 0) {
+            flights = extractFlightsFromDutyStats(text);
         }
 
         return Response.json({

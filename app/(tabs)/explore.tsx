@@ -12,10 +12,44 @@ export default function ExploreScreen() {
   const [infoModalVisible, setInfoModalVisible] = useState(false);
   const [infoAirportCode, setInfoAirportCode] = useState<string | null>(null);
 
+  // Store fetched coordinates for airports not in static list
+  const [dynamicCoords, setDynamicCoords] = useState<Record<string, { latitude: number; longitude: number }>>({});
+
+  // Helper to get coordinates from either static list or dynamic fetch
+  const getCoords = (code: string) => {
+    return AIRPORT_COORDINATES[code] || dynamicCoords[code];
+  };
+
+  // Fetch missing coordinates
+  useEffect(() => {
+    const fetchMissing = async () => {
+      const missingCodes = new Set<string>();
+
+      flights.forEach(f => {
+        if (!AIRPORT_COORDINATES[f.origin] && !dynamicCoords[f.origin]) missingCodes.add(f.origin);
+        if (!AIRPORT_COORDINATES[f.destination] && !dynamicCoords[f.destination]) missingCodes.add(f.destination);
+      });
+
+      if (missingCodes.size === 0) return;
+
+      console.log('🔍 Finding coordinates for:', Array.from(missingCodes));
+
+      for (const code of missingCodes) {
+        // @ts-ignore
+        const coords = await import('@/tools/airlabs').then(m => m.getAirportCoordinates(code));
+        if (coords) {
+          setDynamicCoords(prev => ({ ...prev, [code]: coords }));
+        }
+      }
+    };
+
+    fetchMissing();
+  }, [flights]); // Run when flights change
+
   // Animate to selected destination when it changes
   useEffect(() => {
     if (selectedDestination && mapRef.current) {
-      const coords = AIRPORT_COORDINATES[selectedDestination];
+      const coords = getCoords(selectedDestination);
       if (coords) {
         mapRef.current.animateToRegion({
           latitude: coords.latitude,
@@ -25,7 +59,7 @@ export default function ExploreScreen() {
         }, 1000);
       }
     }
-  }, [selectedDestination]);
+  }, [selectedDestination, dynamicCoords]);
 
   // Clear selection when leaving
   useEffect(() => {
@@ -48,9 +82,10 @@ export default function ExploreScreen() {
         mapType="standard"
       >
         {flights.map((flight, index) => {
-          const originCoords = AIRPORT_COORDINATES[flight.origin];
-          const destCoords = AIRPORT_COORDINATES[flight.destination];
+          const originCoords = getCoords(flight.origin);
+          const destCoords = getCoords(flight.destination);
 
+          // Only render if we have BOTH coordinates
           if (!originCoords || !destCoords) {
             return null;
           }
