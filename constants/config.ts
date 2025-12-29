@@ -2,31 +2,28 @@ import Constants from 'expo-constants';
 
 /**
  * Get the API URL based on the current environment
- * 
- * IMPORTANT: Expo Router API routes only work in development mode.
- * For production builds, you MUST deploy your Flask server separately
- * and configure the URL below or via environment variables.
- * 
- * Options:
- * 1. Deploy Flask server to: Heroku, Railway, Render, AWS, etc.
- * 2. Set API_URL in app.json extra config or via EAS secrets
- * 3. Use the Expo API route only for development
  */
 export const getApiUrl = (): string => {
-  const isDev = __DEV__;
-
-  if (isDev) {
-    const host = Constants.expoConfig?.hostUri?.split(':')[0];
-    // const port = Constants.expoConfig?.hostUri?.split(':')[1] || '8081';
-    const localUrl = `http://${host}:5002`;
-    console.log('💻 Using Python Backend:', localUrl);
-    return `${localUrl}/upload`;
-  }
-
-  // Priority 1: Environment Variable (Standard Expo way)
+  // Priority 1: Environment Variable (Defined in .env as EXPO_PUBLIC_API_URL)
   const envUrl = process.env.EXPO_PUBLIC_API_URL;
   if (envUrl) {
+    console.log('💻 Using API URL from Environment:', envUrl);
     return `${envUrl}/upload`;
+  }
+
+  // Priority 2: Development Local IP (for physical devices)
+  if (__DEV__) {
+    const host = Constants.expoConfig?.hostUri?.split(':')[0];
+    if (host) {
+      const localUrl = `http://${host}:5002`;
+      console.log('💻 Using Local IP Backend:', localUrl);
+      return `${localUrl}/upload`;
+    }
+
+    // Fallback for Simulator/Emulator
+    const fallbackUrl = 'http://127.0.0.1:5002';
+    console.log('💻 Using Simulator Fallback:', fallbackUrl);
+    return `${fallbackUrl}/upload`;
   }
 
   // Priority 3: app.json extra
@@ -39,5 +36,3 @@ export const getApiUrl = (): string => {
 };
 
 export const API_URL = getApiUrl();
-
-
