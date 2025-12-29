@@ -38,7 +38,7 @@ export default function HomeScreen() {
   const [showWeather, setShowWeather] = useState(false);
 
   // Animation for modal
-  const modalY = useRef(new Animated.Value(SCREEN_HEIGHT * 0.35)).current;
+  const modalY = useRef(new Animated.Value(SCREEN_HEIGHT * 0.55)).current;
 
   const panResponder = useRef(
     PanResponder.create({
@@ -47,7 +47,7 @@ export default function HomeScreen() {
         return Math.abs(gestureState.dy) > 5;
       },
       onPanResponderMove: (_, gestureState) => {
-        const newY = Math.max(50, Math.min(SCREEN_HEIGHT * 0.8, SCREEN_HEIGHT * 0.35 + gestureState.dy));
+        const newY = Math.max(50, Math.min(SCREEN_HEIGHT * 0.8, SCREEN_HEIGHT * 0.55 + gestureState.dy));
         modalY.setValue(newY);
       },
       onPanResponderRelease: (_, gestureState) => {
@@ -66,7 +66,7 @@ export default function HomeScreen() {
         } else {
           // Return to default
           Animated.spring(modalY, {
-            toValue: SCREEN_HEIGHT * 0.35,
+            toValue: SCREEN_HEIGHT * 0.55,
             useNativeDriver: false,
           }).start();
         }
