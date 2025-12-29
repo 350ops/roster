@@ -3,7 +3,7 @@ import { Weather, WeatherAtLocation } from '@/components/Weather';
 import { getWeather } from '@/tools/weather';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import { GlassContainer, GlassView } from 'expo-glass-effect';
+import { GlassView } from 'expo-glass-effect';
 import { useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import {
@@ -225,10 +225,16 @@ export default function HomeScreen() {
       )}
 
       {/* Top Controls with Glass Effect */}
-      <GlassContainer style={styles.topControls} spacing={10}>
-
-
-      </GlassContainer>
+      <View style={styles.topControls}>
+        <View /> {/* Spacer for left side */}
+        {flights.length > 0 && (
+          <GlassView style={styles.floatingAddButton} intensity={40}>
+            <TouchableOpacity onPress={pickDocument} disabled={loading}>
+              <Ionicons name="add" size={28} color="#000" />
+            </TouchableOpacity>
+          </GlassView>
+        )}
+      </View>
 
       {/* Draggable Bottom Modal */}
       <Animated.View style={[styles.modalContainer, { top: modalY }]}>
@@ -289,23 +295,25 @@ export default function HomeScreen() {
               )}
             </View>
 
-            {/* Upload Card */}
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={pickDocument}
-              disabled={loading}
-            >
-              <View style={styles.uploadCard}>
-                <View style={styles.cardIcon}>
-                  <Ionicons name="globe-outline" size={24} color="white" />
+            {/* Upload Card - Only show when empty */}
+            {flights.length === 0 && (
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={pickDocument}
+                disabled={loading}
+              >
+                <View style={styles.uploadCard}>
+                  <View style={styles.cardIcon}>
+                    <Ionicons name="globe-outline" size={24} color="white" />
+                  </View>
+                  <View style={styles.cardText}>
+                    <Text style={styles.uploadTitle}>Upload your Roster</Text>
+                    <Text style={styles.uploadSubtitle}>PDF file from PeopleX</Text>
+                  </View>
+                  <Ionicons name="ellipsis-horizontal" size={20} color="#C7C7CC" />
                 </View>
-                <View style={styles.cardText}>
-                  <Text style={styles.uploadTitle}>Upload your Roster</Text>
-                  <Text style={styles.uploadSubtitle}>PDF file from PeopleX</Text>
-                </View>
-                <Ionicons name="ellipsis-horizontal" size={20} color="#C7C7CC" />
-              </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            )}
 
             {/* Section Header */}
             <View style={styles.sectionHeader}>
@@ -467,6 +475,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     zIndex: 10,
+  },
+  floatingAddButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
   },
   weatherPill: {
     flexDirection: 'row',
