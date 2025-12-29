@@ -21,7 +21,7 @@ import {
   View
 } from 'react-native';
 
-import { AIRPORT_CITIES, AIRPORT_COORDINATES } from '@/constants/airports';
+import { AIRPORT_CITIES, AIRPORT_COORDINATES, AIRPORT_UTC_OFFSETS } from '@/constants/airports';
 import { API_URL } from '@/constants/config';
 import { useFlights } from '@/context/FlightContext';
 
@@ -226,14 +226,14 @@ export default function HomeScreen() {
 
       {/* Top Controls with Glass Effect */}
       <View style={styles.topControls}>
-        <View /> {/* Spacer for left side */}
-        {flights.length > 0 && (
+        <View />
+        {flights.length > 0 ? (
           <GlassView style={styles.floatingAddButton} intensity={40}>
             <TouchableOpacity onPress={pickDocument} disabled={loading}>
               <Ionicons name="add" size={28} color="#000" />
             </TouchableOpacity>
           </GlassView>
-        )}
+        ) : null}
       </View>
 
       {/* Draggable Bottom Modal */}
@@ -370,9 +370,38 @@ export default function HomeScreen() {
                   }
                 }
 
-                // Format Block Hours for display
-                const [bH, bM] = item.block_hours.split(':');
-                const displayBlock = `${bH}h ${bM}m`;
+                // Calculate accurate duration if times and offsets are available
+                let displayBlock = item.block_hours ? `${item.block_hours.split(':')[0]}h ${item.block_hours.split(':')[1]}m` : '0h 0m';
+                let bH = item.block_hours?.split(':')[0] || '0';
+                let bM = item.block_hours?.split(':')[1] || '0';
+
+                if (item.departure_time && item.arrival_time) {
+                  const [dH, dM] = item.departure_time.split(':').map(Number);
+                  const [aH, aM] = item.arrival_time.split(':').map(Number);
+
+                  // Total minutes from local midnight
+                  const depMinutes = dH * 60 + dM;
+                  let arrMinutes = aH * 60 + aM;
+                  if (item.arrival_day_offset) {
+                    arrMinutes += item.arrival_day_offset * 1440;
+                  }
+
+                  const localDiffMinutes = arrMinutes - depMinutes;
+
+                  // Adjust for timezones
+                  const originOffset = AIRPORT_UTC_OFFSETS[item.origin] ?? 3; // Default to Doha
+                  const destOffset = AIRPORT_UTC_OFFSETS[item.destination] ?? 3;
+
+                  const realTotalMinutes = localDiffMinutes + (originOffset - destOffset) * 60;
+
+                  if (realTotalMinutes > 0) {
+                    const h = Math.floor(realTotalMinutes / 60);
+                    const m = realTotalMinutes % 60;
+                    bH = h.toString();
+                    bM = m.toString().padStart(2, '0');
+                    displayBlock = `${h}h ${m}m`;
+                  }
+                }
 
                 return (
                   <TouchableOpacity

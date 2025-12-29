@@ -4,10 +4,25 @@ import re
 from datetime import datetime, timedelta
 import os
 import sys
+import json
 
 # Get path relative to the script location
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_CSV = os.path.join(SCRIPT_DIR, "roster_flights.csv")
+OFFSETS_PATH = os.path.join(SCRIPT_DIR, "airport_offsets.json")
+
+# Load Airport Offsets for Duration Calculation
+AIRPORT_OFFSETS = {}
+if os.path.exists(OFFSETS_PATH):
+    try:
+        with open(OFFSETS_PATH, 'r') as f:
+            AIRPORT_OFFSETS = json.load(f)
+    except Exception as e:
+        print(f"Warning: Could not load airport offsets: {e}")
+
+def get_utc_offset(iata):
+    """Returns UTC offset in hours. Defaults to 0 if IATA unknown."""
+    return float(AIRPORT_OFFSETS.get(iata, 3.0)) # Default to 3.0 (Doha) as many flights are ex-DOH
 
 # --- Grid Report Regexes ---
 DATE_RE = re.compile(r"^\d{2}[A-Z][a-z]{2}$")
@@ -101,8 +116,22 @@ def extract_from_column(words, date):
         if arr_dt < dep_dt:
              arr_dt += timedelta(days=1)
 
-        block = arr_dt - dep_dt
-        hhmm = f"{block.seconds//3600:02d}:{(block.seconds//60)%60:02d}"
+        # Timezone Adjustment
+        # Duration = (ArrivalLocal - DepLocal) + (OriginOffset - DestOffset)
+        origin_iata = iatas[0]
+        dest_iata = iatas[1]
+        
+        origin_offset = get_utc_offset(origin_iata)
+        dest_offset = get_utc_offset(dest_iata)
+        
+        # Real Duration = block + (origin_offset - dest_offset)
+        # We use timedelta for the math
+        local_diff = arr_dt - dep_dt
+        real_duration_seconds = local_diff.total_seconds() + (origin_offset - dest_offset) * 3600
+        
+        h = int(real_duration_seconds // 3600)
+        m = int((real_duration_seconds // 60) % 60)
+        hhmm = f"{h:02d}:{m:02d}"
 
         flights.append({
             "date": date.isoformat(),
