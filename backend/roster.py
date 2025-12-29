@@ -8,17 +8,17 @@ import sys
 # Get path relative to the script location
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_CSV = os.path.join(SCRIPT_DIR, "roster_flights.csv")
-YEAR = 2025 # TODO: Make this dynamic if needed, or derived from file
 
 # --- Grid Report Regexes ---
 DATE_RE = re.compile(r"^\d{2}[A-Z][a-z]{2}$")
 IATA_RE = re.compile(r"^[A-Z]{3}$")
 FLIGHT_RE = re.compile(r"^(?:QR)?\d{2,4}$")
 TIME_RE = re.compile(r"^(?P<h>\d{1,2}):(?P<m>\d{2})(?:\(\+(?P<d>\d)\))?$")
+PERIOD_RE = re.compile(r"Period:\s*(\d{1,2}-[A-Za-z]{3}-\d{4})")
 
 # --- Stats Report Regexes ---
 STATS_DATE_RE = re.compile(r"^(\d{2}-[A-Za-z]{3}-\d{4})") # 01-Apr-2024
-STATS_FLIGHT_RE = re.compile(r"^(?:QR)?(\d{3,4})/([A-Z]{3})-([A-Z]{3})\s+\S+\s+(\d{2}:\d{2})") # Matches both: "127/DOH-MXP A7-ALW 07:42" AND "QR199/DOH-BUD A7-AHW 05:11 ..."
+STATS_FLIGHT_RE = re.compile(r"^(?:QR)?(\d{3,4})/([A-Z]{3})-([A-Z]{3})\s+\S+\s+(\d{2}:\d{2})") 
 
 # --- Helpers ---
 MONTHS = {
@@ -63,32 +63,23 @@ def extract_from_column(words, date):
         flight = flight_tokens[0].replace("QR","")
 
         # Scan downwards for Airports and Times
-        # Stop if we hit another flight or go too far (e.g. 10 lines)
         iatas = []
         times = []
         
-        # Start looking from the current line (in case on same line) 
-        # but if flight is alone, it will proceed to next lines
         for j in range(i, min(len(tokens), i+15)):
-            # If we hit a NEW flight (at a later line), stop assuming this block belongs to previous flight
             if j > i:
                  next_flight_tokens = [t for t in tokens[j] if FLIGHT_RE.match(t)]
                  if next_flight_tokens:
                      break
             
-            # Collect items from this line
             line_iatas = [t for t in tokens[j] if IATA_RE.match(t)]
             line_times = [t for t in tokens[j] if TIME_RE.match(t)]
             
-            # Append distinct ones (avoiding duplicates if they appear weirdly)
             for t in line_iatas:
                 if t not in iatas: iatas.append(t)
             for t in line_times:
                 if t not in times: times.append(t)
             
-            # If we have enough data, we can stop early? 
-            # Ideally yes, but maybe there's noise. 
-            # But usually 2 IATAs and 2 Times is what we need.
             if len(iatas) >= 2 and len(times) >= 2:
                 break
 
@@ -107,8 +98,6 @@ def extract_from_column(words, date):
             datetime.min.time()
         ).replace(hour=arr[0], minute=arr[1])
 
-        # Handle date crossover if implicit (+1 not present but time dropped)
-        # e.g. 23:00 -> 02:00
         if arr_dt < dep_dt:
              arr_dt += timedelta(days=1)
 
@@ -125,10 +114,37 @@ def extract_from_column(words, date):
 
     return flights
 
+def extract_period_start(pdf_path):
+    """
+    Attempts to read 'Period: DD-Mon-YYYY' from the first page text 
+    to determine the start year/date of the roster.
+    Returns a datetime date object or defaults to today.
+    """
+    try:
+        with pdfplumber.open(pdf_path) as pdf:
+            if not pdf.pages:
+                return datetime.now().date()
+            text = pdf.pages[0].extract_text()
+            if text:
+                match = PERIOD_RE.search(text)
+                if match:
+                    date_str = match.group(1)
+                    return datetime.strptime(date_str, "%d-%b-%Y").date()
+    except Exception as e:
+        print(f"Warning: Could not extract period from {pdf_path}: {e}")
+    
+    return datetime.now().date()
+
 # --- Extractors ---
 
 def extract_flights_from_grid(pdf_path):
     print(f"Extracting from Grid Report: {pdf_path}")
+    
+    # determining the base year from the file content
+    period_start = extract_period_start(pdf_path)
+    base_year = period_start.year
+    period_month_idx = period_start.month
+    
     rows = []
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
@@ -144,8 +160,32 @@ def extract_flights_from_grid(pdf_path):
                 end_x = headers[idx+1]["x0"] if idx+1 < len(headers) else page.width
 
                 day = int(h["text"][:2])
-                month = MONTHS[h["text"][2:]]
-                date = datetime(YEAR, month, day).date()
+                month_str = h["text"][2:]
+                
+                if month_str not in MONTHS:
+                    continue
+                    
+                month = MONTHS[month_str]
+                
+                # Handling Year Crossover (e.g. Dec -> Jan)
+                # If period starts in Dec and we see Jan, likely next year.
+                # Simple heuristic: if month < period_start_month, add 1 to year
+                # (Assumes roster isn't > 1 year long)
+                year = base_year
+                if month < period_month_idx:
+                    year += 1
+                elif month > period_month_idx + 10: 
+                    # safeguard for reverse case? unlikely for roster
+                    # e.g. period starts Jan 2025, sees Dec header -> Dec 2024?
+                    # usually rosters are forward looking. assume same year or next.
+                    pass 
+
+                try:
+                    date = datetime(year, month, day).date()
+                except ValueError:
+                    # Fallback for invalid dates (e.g. leap year mismatch if year logic failed)
+                    print(f"Skipping invalid date: {year}-{month}-{day}")
+                    continue
 
                 col_words = [
                     w for w in words
@@ -234,11 +274,6 @@ def main():
             print("No PDF files found in 'toconvert'. checking root...")
     
     # 2. Fallback: Check root for specific files if nothing from toconvert
-    # (Only if we haven't found anything yet, or maybe we want to support both?)
-    # User said: "get the file to convert from @[toconvert] and to process any pdf there"
-    # So if toconvert has files, we probably shouldn't look at root Roster Report.pdf unless empty?
-    # Let's keep it additive or fallback? 
-    # Logic: If nothing found in `toconvert`, check root legacy files.
     if not all_flights:
         stats_path = os.path.join(SCRIPT_DIR, "Duty Hrs Statistics Report.pdf")
         roster_path = os.path.join(SCRIPT_DIR, "Roster Report.pdf")

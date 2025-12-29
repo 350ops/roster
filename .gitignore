@@ -2,6 +2,10 @@
 
 # dependencies
 node_modules/
+.venv/
+venv/
+ENV/
+env/
 
 # Expo
 .expo/
@@ -30,7 +34,12 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 .env*.local
 
 # typescript
@@ -45,8 +54,11 @@ app-example
 # Python
 __pycache__/
 *.pyc
-*venv*
+*.pyo
+*.pyd
+.Python
 backend/toconvert/
+backend/*.csv
 
 # Node (Broad)
 **/node_modules/

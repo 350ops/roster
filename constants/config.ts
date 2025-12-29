@@ -17,10 +17,10 @@ export const getApiUrl = (): string => {
 
   if (isDev) {
     const host = Constants.expoConfig?.hostUri?.split(':')[0];
-    const port = Constants.expoConfig?.hostUri?.split(':')[1] || '8081';
-    const localUrl = `http://${host}:${port}`;
-    console.log('💻 Using Local Expo API:', localUrl);
-    return `${localUrl}/api/upload`;
+    // const port = Constants.expoConfig?.hostUri?.split(':')[1] || '8081';
+    const localUrl = `http://${host}:5002`;
+    console.log('💻 Using Python Backend:', localUrl);
+    return `${localUrl}/upload`;
   }
 
   // Priority 1: Environment Variable (Standard Expo way)

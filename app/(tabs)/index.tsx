@@ -245,8 +245,8 @@ export default function HomeScreen() {
           >
             {/* Search Bar */}
             <View style={styles.searchContainer}>
-              <GlassView style={styles.searchBar} glassEffectStyle="clear">
-                <Ionicons name="search" size={20} color="#d1d1d6ff" />
+              <View style={styles.searchBar}>
+                <Ionicons name="search" size={20} color="#8E8E93" />
                 <TextInput
                   style={styles.searchInput}
                   placeholder="Search Destination"
@@ -260,55 +260,55 @@ export default function HomeScreen() {
                   autoCapitalize="characters"
                   autoCorrect={false}
                 />
-                {searchQuery.length > 0 && (
+                {searchQuery.length > 0 ? (
                   <TouchableOpacity onPress={() => { setSearchQuery(''); setShowSuggestions(false); }}>
                     <Ionicons name="close-circle" size={20} color="#8E8E93" />
                   </TouchableOpacity>
+                ) : (
+                  <Ionicons name="mic" size={20} color="#8E8E93" />
                 )}
-              </GlassView>
+              </View>
 
               {/* Suggestions Dropdown */}
               {showSuggestions && filteredDestinations.length > 0 && searchQuery.length > 0 && (
-                <GlassView style={styles.suggestionsContainer}>
+                <View style={styles.suggestionsContainer}>
                   {filteredDestinations.slice(0, 5).map((code) => (
                     <TouchableOpacity
                       key={code}
                       style={styles.suggestionRow}
                       onPress={() => handleSelectDestination(code)}
                     >
-                      <Ionicons name="location-outline" size={18} color="#007AFF" />
+                      <View style={[styles.cardIcon, { backgroundColor: '#007AFF', width: 32, height: 32, borderRadius: 16 }]}>
+                        <Ionicons name="location" size={16} color="white" />
+                      </View>
                       <Text style={styles.suggestionText}>{code}</Text>
                     </TouchableOpacity>
                   ))}
-                </GlassView>
+                </View>
               )}
             </View>
 
             {/* Upload Card */}
             <TouchableOpacity
-              activeOpacity={0.8}
+              activeOpacity={0.7}
               onPress={pickDocument}
               disabled={loading}
             >
-              <GlassView style={styles.uploadCard} isInteractive>
+              <View style={styles.uploadCard}>
                 <View style={styles.cardIcon}>
-                  <Ionicons name="globe-outline" size={26} color="#007AFF" />
+                  <Ionicons name="globe-outline" size={24} color="white" />
                 </View>
                 <View style={styles.cardText}>
                   <Text style={styles.uploadTitle}>Upload your Roster</Text>
                   <Text style={styles.uploadSubtitle}>PDF file from PeopleX</Text>
                 </View>
-                <Ionicons name="ellipsis-horizontal" size={22} color="#111" />
-              </GlassView>
+                <Ionicons name="ellipsis-horizontal" size={20} color="#C7C7CC" />
+              </View>
             </TouchableOpacity>
 
             {/* Section Header */}
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionLabel}>Recent</Text>
-              <View style={styles.sectionBadge}>
-                <Text style={styles.sectionBadgeText}>Flights</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color="#111" />
+              <Text style={styles.sectionLabel}>Recent Flights</Text>
             </View>
 
             {/* Loading */}
@@ -320,10 +320,10 @@ export default function HomeScreen() {
 
             {/* Empty State */}
             {!loading && flights.length === 0 && (
-              <GlassView style={styles.emptyCard}>
-                <Text style={styles.emptyText}>No flights loaded yet.</Text>
-                <Text style={styles.emptySubtext}>Upload a PDF to get started</Text>
-              </GlassView>
+              <View style={styles.emptyCard}>
+                <Text style={styles.emptyText}>No flights loaded yet</Text>
+                <Text style={styles.emptySubtext}>Upload a roster to see your history</Text>
+              </View>
             )}
 
             {/* Flight Rows */}
@@ -333,16 +333,16 @@ export default function HomeScreen() {
                   key={`${item.date}-${item.origin}-${index}`}
                   onPress={() => handleSelectDestination(item.destination || item.origin)}
                 >
-                  <GlassView style={styles.flightRow} isInteractive>
+                  <View style={styles.flightRow}>
                     <View style={styles.flightIcon}>
-                      <MaterialCommunityIcons name="airplane-takeoff" size={22} color="#FF7A00" />
+                      <MaterialCommunityIcons name="airplane-takeoff" size={20} color="white" />
                     </View>
                     <View style={styles.flightText}>
                       <Text style={styles.flightCity}>{item.destination || item.origin}</Text>
                       <Text style={styles.flightDate}>{item.date || '—'}</Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={20} color="#111" />
-                  </GlassView>
+                    <Ionicons name="ellipsis-horizontal" size={20} color="#C7C7CC" />
+                  </View>
                 </TouchableOpacity>
               ))}
           </ScrollView>
@@ -352,6 +352,7 @@ export default function HomeScreen() {
   );
 }
 
+// Styles definition
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -392,171 +393,191 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    // Shadow for the sheet
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 10,
   },
   bottomSheet: {
     flex: 1,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingBottom: 100,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    backgroundColor: 'white', // Apple Maps uses a solid/translucent white
+    overflow: 'hidden',
+    paddingBottom: 40,
     minHeight: SCREEN_HEIGHT * 0.6,
   },
   handleContainer: {
-    paddingVertical: 12,
+    paddingVertical: 10,
     alignItems: 'center',
+    backgroundColor: 'white',
   },
   handle: {
-    width: 60,
+    width: 36,
     height: 5,
     borderRadius: 3,
-    backgroundColor: 'rgba(0, 0, 0, 0.42)',
+    backgroundColor: '#D1D1D6', // System Gray 4
   },
   sheetScroll: {
     flex: 1,
+    backgroundColor: 'white',
   },
   sheetContent: {
     paddingHorizontal: 16,
-    paddingBottom: 40,
-    gap: 14,
+    paddingBottom: 50,
   },
   searchContainer: {
-    zIndex: 10,
+    marginBottom: 20,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 14,
-    paddingHorizontal: 12,
+    borderRadius: 10,
+    paddingHorizontal: 10,
     height: 44,
     gap: 8,
-    backgroundColor: 'rgba(255, 255, 255, 1)',
+    backgroundColor: '#F2F2F7', // System Gray 6
   },
   searchInput: {
     flex: 1,
-    fontSize: 15,
-    color: '#000000ff',
-    fontWeight: '500',
+    fontSize: 17,
+    color: '#000',
+    fontWeight: '400',
+    letterSpacing: -0.4,
   },
   suggestionsContainer: {
     marginTop: 8,
+    backgroundColor: 'white',
     borderRadius: 12,
     overflow: 'hidden',
+    // shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   suggestionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 12,
-    gap: 10,
+    gap: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(0, 0, 0, 0.83)',
+    borderBottomColor: '#E5E5EA',
   },
   suggestionText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000000ff',
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#000',
   },
+  // Upload Card Styling (Mimicking the image's "Upload to..." look)
   uploadCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    gap: 10,
-    backgroundColor: 'rgba(255, 255, 255, 1)',
+    borderRadius: 12,
+    padding: 16,
+    backgroundColor: '#fff',
+    // It seems to be just a clean row in the image, or a card. 
+    // Let's make it a subtle card to stand out slightly or just a row.
+    // The visual provided has it inside a white rounded container if the bg was gray, 
+    // but here the sheet is white. Let's give it a border or shadow?
+    // Apple Maps "Favorites" often have their own section.
+    borderWidth: 1,
+    borderColor: '#F2F2F7',
+    marginBottom: 24,
   },
   cardIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(0, 122, 255, 0.2)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#007AFF', // Apple Blue
     alignItems: 'center',
     justifyContent: 'center',
   },
   cardText: {
     flex: 1,
+    marginLeft: 12,
   },
   uploadTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111',
-    marginBottom: 1,
+    color: '#000',
+    marginBottom: 2,
   },
   uploadSubtitle: {
     fontSize: 13,
     fontWeight: '400',
-    color: '#666',
+    color: '#8E8E93',
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 2,
+    marginBottom: 12,
+    marginTop: 8,
   },
   sectionLabel: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111',
+    fontSize: 20, // Bold header
+    fontWeight: 'bold',
+    color: '#000',
+    letterSpacing: 0.3,
   },
   sectionBadge: {
-    backgroundColor: '#FF9500',
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    display: 'none', // Remove badge to match clean Apple look
   },
   sectionBadgeText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#fff',
-    letterSpacing: -0.2,
+    display: 'none',
   },
   loaderContainer: {
     paddingVertical: 24,
     alignItems: 'center',
   },
   emptyCard: {
-    borderRadius: 16,
     padding: 20,
+    alignItems: 'center',
   },
   emptyText: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '600',
-    color: '#3C3C43',
-    marginBottom: 4,
-  },
-  emptySubtext: {
-    fontSize: 15,
-    fontWeight: '400',
     color: '#8E8E93',
   },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#C7C7CC',
+  },
+  // Flight Row Styling (Apple Maps Look)
   flightRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 10,
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    paddingVertical: 12,
+    backgroundColor: 'white',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E5E5EA', // Separator
   },
   flightIcon: {
-    width: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 122, 0, 0.2)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#AF52DE', // Apple Purple
     alignItems: 'center',
     justifyContent: 'center',
   },
   flightText: {
     flex: 1,
+    marginLeft: 12,
   },
   flightCity: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111',
+    color: '#000',
+    marginBottom: 2,
   },
   flightDate: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '400',
-    color: '#666',
-    marginTop: 1,
+    color: '#8E8E93', // Subtitle Gray
   },
   weatherOverlay: {
     position: 'absolute',
