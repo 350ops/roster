@@ -228,7 +228,7 @@ export default function HomeScreen() {
       <View style={styles.topControls}>
         <View />
         {flights.length > 0 ? (
-          <GlassView style={styles.floatingAddButton} intensity={40}>
+          <GlassView style={styles.floatingAddButton}>
             <TouchableOpacity onPress={pickDocument} disabled={loading}>
               <Ionicons name="add" size={28} color="#000" />
             </TouchableOpacity>
@@ -707,14 +707,19 @@ const styles = StyleSheet.create({
   flightIcon: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: 40,
     backgroundColor: '#AF52DE', // Apple Purple
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#7F3FBF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.55,
+    shadowRadius: 8,
+    elevation: 25,
   },
   flightText: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: 22,
   },
   flightCity: {
     fontSize: 16,
@@ -766,16 +771,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   durationLarge: {
-    fontSize: 42,
+    fontSize: 28,
     fontWeight: '700',
     color: '#000',
-    lineHeight: 48,
+    lineHeight: 38,
   },
   durationSmall: {
-    fontSize: 10,
+    fontSize: 8,
     fontWeight: '600',
     color: '#8E8E93',
-    letterSpacing: 0.5,
+    letterSpacing: 0.1,
   },
   flightHeaderMain: {
     flex: 1,

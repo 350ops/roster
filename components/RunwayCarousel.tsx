@@ -32,8 +32,9 @@ interface RunwayCarouselProps {
     runways: Runway[];
 }
 
-const CARD_WIDTH = SCREEN_WIDTH * 0.85;
-const CARD_MARGIN = 16;
+// Slightly smaller cards so they fit comfortably inside the glass modal
+const CARD_WIDTH = SCREEN_WIDTH * 0.78;
+const CARD_MARGIN = 10;
 
 export function RunwayCarousel({
     title = "Runways",
@@ -160,32 +161,34 @@ function GlassStat({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
     container: {
         width: "100%",
-        marginVertical: 10,
+        maxWidth: "100%",
+        marginVertical: 2,
+        alignSelf: "stretch",
     },
     header: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        paddingHorizontal: 16,
-        marginBottom: 12,
+        paddingHorizontal: 12,
+        marginBottom: 10,
     },
     title: {
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: "700",
         color: "#fff",
     },
     subtitle: {
-        fontSize: 12,
+        fontSize: 11,
         color: "rgba(255,255,255,0.6)",
     },
     controls: {
         flexDirection: "row",
-        gap: 8,
+        gap: 6,
     },
     controlButton: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        width: 32,
+        height: 32,
+        borderRadius: 16,
         backgroundColor: "rgba(255,255,255,0.1)",
         alignItems: "center",
         justifyContent: "center",
@@ -193,39 +196,39 @@ const styles = StyleSheet.create({
         borderColor: "rgba(255,255,255,0.1)",
     },
     scrollContent: {
-        paddingHorizontal: 16,
-        paddingBottom: 20,
+        paddingHorizontal: 12,
+        paddingBottom: 4,
     },
     cardContainer: {
         width: CARD_WIDTH,
         marginRight: CARD_MARGIN,
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.3,
-        shadowRadius: 15,
-        elevation: 10,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.18,
+        shadowRadius: 12,
+        elevation: 6,
     },
     card: {
-        borderRadius: 24,
-        padding: 20,
+        borderRadius: 20,
+        padding: 6,
         borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.15)",
+        borderColor: "rgba(255,255,255,0.12)",
         overflow: "hidden",
     },
     cardHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "flex-start",
-        marginBottom: 16,
+        marginBottom: 2,
     },
     cardLabel: {
-        fontSize: 10,
+        fontSize: 9,
         color: "rgba(255,255,255,0.5)",
         textTransform: "uppercase",
-        letterSpacing: 1,
+        letterSpacing: 0.8,
     },
     cardIdent: {
-        fontSize: 24,
+        fontSize: 20,
         fontWeight: "800",
         color: "#fff",
         marginTop: 2,
@@ -234,9 +237,9 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         backgroundColor: "rgba(255,255,255,0.1)",
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 12,
+        paddingHorizontal: 8,
+        paddingVertical: -20,
+        borderRadius: 10,
         borderWidth: 1,
         borderColor: "rgba(255,255,255,0.1)",
         gap: 6,
@@ -248,15 +251,15 @@ const styles = StyleSheet.create({
         backgroundColor: "#10b981",
     },
     surfaceText: {
-        fontSize: 11,
+        fontSize: 10,
         fontWeight: "600",
         color: "rgba(255,255,255,0.8)",
     },
     strip: {
         backgroundColor: "rgba(0,0,0,0.3)",
-        borderRadius: 16,
-        padding: 12,
-        marginBottom: 16,
+        borderRadius: 14,
+        padding: 10,
+        marginBottom: 2,
         borderWidth: 1,
         borderColor: "rgba(255,255,255,0.05)",
     },
@@ -266,24 +269,24 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
     },
     stripText: {
-        fontSize: 11,
+        fontSize: 10,
         fontWeight: "700",
         color: "rgba(255,255,255,0.8)",
     },
     stripDots: {
         color: "rgba(255,255,255,0.2)",
-        fontSize: 10,
-        letterSpacing: 2,
+        fontSize: 9,
+        letterSpacing: 1.6,
     },
     stripFooter: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginTop: 8,
+        marginTop: 6,
     },
     stripDetail: {
-        fontSize: 11,
-        color: "rgba(255,255,255,0.5)",
+        fontSize: 10,
+        color: "rgba(255,255,255,0.55)",
     },
     windInfo: {
         flexDirection: "row",
@@ -291,7 +294,7 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     windText: {
-        fontSize: 11,
+        fontSize: 10,
         fontWeight: "600",
         color: "rgba(255,255,255,0.7)",
     },
@@ -301,24 +304,24 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     statBox: {
-        width: (CARD_WIDTH - 40 - 8) / 2,
+        width: (CARD_WIDTH - 32 - 8) / 2,
         backgroundColor: "rgba(255,255,255,0.06)",
-        padding: 10,
-        borderRadius: 16,
+        padding: 9,
+        borderRadius: 14,
         borderWidth: 1,
         borderColor: "rgba(255,255,255,0.08)",
     },
     statLabel: {
-        fontSize: 9,
+        fontSize: 8.5,
         color: "rgba(255,255,255,0.45)",
         textTransform: "uppercase",
         fontWeight: "600",
     },
     statValue: {
-        fontSize: 13,
+        fontSize: 12,
         fontWeight: "600",
         color: "#fff",
-        marginTop: 3,
+        marginTop: 2,
     },
     emptyCard: {
         width: SCREEN_WIDTH - 32,
