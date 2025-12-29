@@ -21,7 +21,7 @@ import {
   View
 } from 'react-native';
 
-import { AIRPORT_COORDINATES } from '@/constants/airports';
+import { AIRPORT_CITIES, AIRPORT_COORDINATES } from '@/constants/airports';
 import { API_URL } from '@/constants/config';
 import { useFlights } from '@/context/FlightContext';
 
@@ -36,6 +36,7 @@ export default function HomeScreen() {
   const [modalVisible, setModalVisible] = useState(true);
   const [weatherData, setWeatherData] = useState<WeatherAtLocation | null>(null);
   const [showWeather, setShowWeather] = useState(false);
+  const [expandedFlightIndex, setExpandedFlightIndex] = useState<number | null>(null);
 
   // Animation for modal
   const modalY = useRef(new Animated.Value(SCREEN_HEIGHT * 0.55)).current;
@@ -327,24 +328,123 @@ export default function HomeScreen() {
             )}
 
             {/* Flight Rows */}
+            {/* Flight Rows */}
             {!loading &&
-              flights.map((item, index) => (
-                <TouchableOpacity
-                  key={`${item.date}-${item.origin}-${index}`}
-                  onPress={() => handleSelectDestination(item.destination || item.origin)}
-                >
-                  <View style={styles.flightRow}>
-                    <View style={styles.flightIcon}>
-                      <MaterialCommunityIcons name="airplane-takeoff" size={20} color="white" />
-                    </View>
-                    <View style={styles.flightText}>
-                      <Text style={styles.flightCity}>{item.destination || item.origin}</Text>
-                      <Text style={styles.flightDate}>{item.date || '—'}</Text>
-                    </View>
-                    <Ionicons name="ellipsis-horizontal" size={20} color="#C7C7CC" />
-                  </View>
-                </TouchableOpacity>
-              ))}
+              flights.map((item, index) => {
+                const isExpanded = expandedFlightIndex === index;
+                const originCity = AIRPORT_CITIES[item.origin] || item.origin;
+                const destCity = AIRPORT_CITIES[item.destination] || item.destination;
+
+                // Simple Layover Calculation
+                let layoverText = null;
+                if (item.destination !== 'DOH') {
+                  const arrivalTimeStr = item.arrival_time || '00:00';
+                  const arrivalDate = new Date(`${item.date}T${arrivalTimeStr}`);
+
+                  // If we have an offset from the parser
+                  if (item.arrival_day_offset) {
+                    arrivalDate.setDate(arrivalDate.getDate() + item.arrival_day_offset);
+                  }
+
+                  // Find next flight from this destination back to DOH
+                  const nextFlight = flights.find((f, i) =>
+                    i > index &&
+                    f.origin === item.destination &&
+                    f.destination === 'DOH'
+                  );
+
+                  if (nextFlight) {
+                    const nextDepTimeStr = nextFlight.departure_time || '00:00';
+                    const nextDepDate = new Date(`${nextFlight.date}T${nextDepTimeStr}`);
+                    const diffMs = nextDepDate.getTime() - arrivalDate.getTime();
+                    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+                    if (diffHrs > 0) layoverText = `${diffHrs}h Layover`;
+                  }
+                }
+
+                // Format Block Hours for display
+                const [bH, bM] = item.block_hours.split(':');
+                const displayBlock = `${bH}h ${bM}m`;
+
+                return (
+                  <TouchableOpacity
+                    key={`${item.date}-${item.origin}-${index}`}
+                    onPress={() => {
+                      if (isExpanded) {
+                        handleSelectDestination(item.destination || item.origin);
+                      } else {
+                        setExpandedFlightIndex(index);
+                      }
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    {!isExpanded ? (
+                      <View style={styles.flightRow}>
+                        <View style={styles.flightIcon}>
+                          <MaterialCommunityIcons name="airplane-takeoff" size={20} color="white" />
+                        </View>
+                        <View style={styles.flightText}>
+                          <Text style={styles.flightCity}>{destCity}</Text>
+                          <Text style={styles.flightDate}>{item.date || '—'}</Text>
+                        </View>
+                        <Ionicons name="ellipsis-horizontal" size={20} color="#C7C7CC" />
+                      </View>
+                    ) : (
+                      <View style={styles.expandedFlightCard}>
+                        <View style={styles.cardHeader}>
+                          <View style={styles.durationContainer}>
+                            <Text style={styles.durationLarge}>{bH}h</Text>
+                            <Text style={styles.durationSmall}>{bM} MINUTES</Text>
+                          </View>
+
+                          <View style={styles.flightHeaderMain}>
+                            <View style={styles.airlineRow}>
+                              <View style={styles.airlineLogoPlaceholder}>
+                                <Ionicons name="airplane" size={12} color="#1c2b5e" />
+                              </View>
+                              <Text style={styles.flightNumberText}>QR {item.flight}</Text>
+                              {layoverText && (
+                                <Text style={styles.layoverText}>
+                                  <Text style={styles.layoverHours}>{layoverText.split(' ')[0]} </Text>
+                                  Layover
+                                </Text>
+                              )}
+                            </View>
+                            <Text style={styles.routeText}>
+                              {originCity} to <Text style={{ fontWeight: 'bold' }}>{destCity}</Text>
+                            </Text>
+
+                            <View style={styles.timesRow}>
+                              <View style={styles.timeBlock}>
+                                <View style={[styles.timeDot, { backgroundColor: '#10b981' }]}>
+                                  <Ionicons name="arrow-up" size={10} color="white" />
+                                </View>
+                                <Text style={styles.iataCode}>{item.origin}</Text>
+                                <Text style={[styles.timeText, { color: '#10b981' }]}>
+                                  {item.departure_time || '--:--'}
+                                </Text>
+                              </View>
+
+                              <View style={styles.timeBlock}>
+                                <View style={[styles.timeDot, { backgroundColor: '#10b981' }]}>
+                                  <Ionicons name="arrow-down" size={10} color="white" />
+                                </View>
+                                <Text style={styles.iataCode}>{item.destination}</Text>
+                                <Text style={[styles.timeText, { color: '#10b981' }]}>
+                                  {item.arrival_time || '--:--'}
+                                  {item.arrival_day_offset ? (
+                                    <Text style={styles.dayOffset}> +{item.arrival_day_offset}</Text>
+                                  ) : null}
+                                </Text>
+                              </View>
+                            </View>
+                          </View>
+                        </View>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
           </ScrollView>
         </GlassView>
       </Animated.View>
@@ -594,5 +694,109 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     padding: 5,
     zIndex: 101,
+  },
+  // Expanded Flight Card Styles
+  expandedFlightCard: {
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    padding: 24,
+    marginBottom: 16,
+    // shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+  },
+  durationContainer: {
+    width: 60,
+    marginRight: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  durationLarge: {
+    fontSize: 42,
+    fontWeight: '700',
+    color: '#000',
+    lineHeight: 48,
+  },
+  durationSmall: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#8E8E93',
+    letterSpacing: 0.5,
+  },
+  flightHeaderMain: {
+    flex: 1,
+  },
+  airlineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+    gap: 6,
+  },
+  airlineLogoPlaceholder: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#f1f1f1',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  flightNumberText: {
+    fontSize: 16,
+    color: '#8E8E93',
+    fontWeight: '500',
+    flex: 1,
+  },
+  layoverText: {
+    fontSize: 14,
+    color: '#000',
+    fontWeight: '500',
+  },
+  layoverHours: {
+    color: '#10b981',
+    fontWeight: '700',
+  },
+  routeText: {
+    fontSize: 20,
+    color: '#000',
+    marginBottom: 16,
+  },
+  timesRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  timeBlock: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  timeDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iataCode: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#8E8E93',
+  },
+  timeText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  dayOffset: {
+    fontSize: 10,
+    fontWeight: '600',
+    verticalAlign: 'top',
   },
 });

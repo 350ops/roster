@@ -109,6 +109,9 @@ def extract_from_column(words, date):
             "flight": flight,
             "origin": iatas[0],
             "destination": iatas[1],
+            "departure_time": f"{dep[0]:02d}:{dep[1]:02d}",
+            "arrival_time": f"{arr[0]:02d}:{arr[1]:02d}",
+            "arrival_day_offset": arr[2],
             "block_hours": hhmm
         })
 

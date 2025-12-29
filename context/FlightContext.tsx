@@ -1,9 +1,13 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
 type Flight = {
     date: string;
+    flight: string;
     origin: string;
     destination: string;
+    departure_time?: string;
+    arrival_time?: string;
+    arrival_day_offset?: number;
     block_hours: string;
 };
 
