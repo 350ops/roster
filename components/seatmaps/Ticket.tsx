@@ -89,7 +89,7 @@ const getAirlineLogo = (code: string) => {
     case 'WY': return require('../../assets/Logos/OmanAir.png');
     case 'KU': return require('../../assets/Logos/KuwaitAirways.png');
     case 'ME': return require('../../assets/Logos/MiddleEastAirlines.png');
-    case 'AH': return require('../../assets/Logos/AirAlgérie.png');
+    case 'AH': return require('../../assets/Logos/AirAlgerie.png');
     case 'UL': return require('../../assets/Logos/SriLankanAirlines.png');
     case 'BG': return require('../../assets/Logos/BimanBangladeshAirlines.png');
     case 'AI': return require('../../assets/Logos/AirIndia.png');
@@ -100,11 +100,11 @@ const getAirlineLogo = (code: string) => {
     case 'TS': return require('../../assets/Logos/AirTransat(TS).png');
     case 'PD': return require('../../assets/Logos/PorterAirlines.png');
     case 'Y4': return require('../../assets/Logos/Volaris.png');
-    case 'AM': return require('../../assets/Logos/Aeroméxico.png');
-    case 'AR': return require('../../assets/Logos/AerolíneasArgentinas.png');
+    case 'AM': return require('../../assets/Logos/Aeromexico.png');
+    case 'AR': return require('../../assets/Logos/AerolineasArgentinas.png');
     case 'LA': return require('../../assets/Logos/LATAMChile.png');
     case 'JJ': return require('../../assets/Logos/LATAMBrasil.png');
-    case 'G3': return require('../../assets/Logos/GolTransportesAéreos.png');
+    case 'G3': return require('../../assets/Logos/GolTransportesAereos.png');
     case 'AD': return require('../../assets/Logos/AzulBrazilianAirlines.png');
     default: return null;
   }
