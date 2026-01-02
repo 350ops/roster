@@ -1,3 +1,13 @@
+"""
+Flask server for parsing Qatar Airways roster PDFs.
+
+Implements a three-tier fallback parsing system:
+1. Standard Report Parser (pdf_flights_to_csv.py) - linear text format with times
+2. Roster Grid Parser (roster.py) - calendar grid layout
+3. Flying Statistics Parser (parse_flying_stats.py) - multi-month stats report
+
+Each parser is tried in sequence until flights are extracted.
+"""
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -5,6 +15,7 @@ from werkzeug.utils import secure_filename
 import os
 import pdf_flights_to_csv
 import roster
+import parse_flying_stats
 import uuid
 
 # Get path relative to the script location
@@ -47,6 +58,11 @@ def upload_file():
             if not flights:
                 print("Standard parser found no flights, trying Roster Grid parser...")
                 flights = roster.extract_flights_from_grid(path)
+            
+            # If still empty, try Third Extractor (Flying Statistics Report)
+            if not flights:
+                print("Roster Grid parser found no flights, trying Flying Statistics parser...")
+                flights = parse_flying_stats.extract_flights(path)
             
             return jsonify({
                 'count': len(flights),

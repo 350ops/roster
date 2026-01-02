@@ -55,3 +55,43 @@ Make sure in Railway:
 - **Health Check Path**: Leave empty or set to `/upload` (if you add a health endpoint)
 - **Port**: Railway sets this automatically via `$PORT` env var
 
+## PDF Parsing Logic
+
+The backend uses a **three-tier fallback system** to parse different types of roster PDFs:
+
+### Parser 1: Standard Report Parser (`pdf_flights_to_csv.py`)
+- **Format**: Linear text with date headers followed by flight lines
+- **Example**:
+  ```
+  29-Jul-2025
+  QR199/DOH-BUD A7-AHW 05:11
+  ```
+- **Fields extracted**: date, origin, destination, block_hours, flight
+- **Use case**: Standard roster reports with times
+
+### Parser 2: Roster Grid Parser (`roster.py`)
+- **Format**: Calendar-style grid layout
+- **Fields extracted**: date, origin, destination, flight
+- **Use case**: Monthly roster grid PDFs
+- **Note**: May not have block hours
+
+### Parser 3: Flying Statistics Report Parser (`parse_flying_stats.py`)
+- **Format**: Multi-month flying statistics report
+- **Example**:
+  ```
+  AUG 2025 99:04 00:00 00:00
+  12-Aug-2025 07:14 00:00 00:00
+  QR522/DOH-GOX A7-AHH 03:52 0/0 00:00 00:00
+  ```
+- **Fields extracted**: date, origin, destination, block_hours, flight
+- **Additional data**: aircraft registration, deadhead hours, freighter hours
+- **Use case**: Flying hour statistics reports spanning multiple months without specific departure/arrival times
+
+### Fallback Logic
+The server tries parsers in order:
+1. Standard Report Parser
+2. If no flights → Roster Grid Parser  
+3. If still no flights → Flying Statistics Parser
+
+This ensures maximum compatibility with different PDF formats from Qatar Airways.
+

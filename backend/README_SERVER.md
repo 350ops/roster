@@ -13,7 +13,7 @@ This is the Flask server that processes PDF flight reports. It needs to be deplo
    - Railway auto-detects Python and deploys!
 
 3. **Get URL:**
-   - Railway gives you a URL like: `https://your-app.up.railway.app`
+   - Railway gives you a URL like: `://your-app.up.railway.app`https
    - Copy this URL
 
 4. **Update App:**

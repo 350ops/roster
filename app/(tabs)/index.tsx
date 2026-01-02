@@ -30,6 +30,10 @@ const SCREEN_HEIGHT = Dimensions.get('window').height;
 export default function HomeScreen() {
   const router = useRouter();
   const { flights, setFlights, setSelectedDestination } = useFlights();
+  const displayFlights = useMemo(
+    () => flights.filter((f) => f.destination !== 'DOH'),
+    [flights]
+  );
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -230,7 +234,7 @@ export default function HomeScreen() {
         {flights.length > 0 ? (
           <GlassView style={styles.floatingAddButton}>
             <TouchableOpacity onPress={pickDocument} disabled={loading}>
-              <Ionicons name="add" size={28} color="#000" />
+              <Ionicons name="add" size={28} color="#FFFFFF" />
             </TouchableOpacity>
           </GlassView>
         ) : null}
@@ -328,7 +332,7 @@ export default function HomeScreen() {
             )}
 
             {/* Empty State */}
-            {!loading && flights.length === 0 && (
+            {!loading && displayFlights.length === 0 && (
               <View style={styles.emptyCard}>
                 <Text style={styles.emptyText}>No flights loaded yet</Text>
                 <Text style={styles.emptySubtext}>Upload a roster to see your history</Text>
@@ -338,7 +342,7 @@ export default function HomeScreen() {
             {/* Flight Rows */}
             {/* Flight Rows */}
             {!loading &&
-              flights.map((item, index) => {
+              displayFlights.map((item, index) => {
                 const isExpanded = expandedFlightIndex === index;
                 const originCity = AIRPORT_CITIES[item.origin] || item.origin;
                 const destCity = AIRPORT_CITIES[item.destination] || item.destination;
@@ -475,6 +479,26 @@ export default function HomeScreen() {
                                 </Text>
                               </View>
                             </View>
+
+                            {/* Seat Map Button */}
+                            <TouchableOpacity
+                              style={styles.seatMapButton}
+                              onPress={() => {
+                                router.push({
+                                  pathname: '/seatmap',
+                                  params: {
+                                    origin: item.origin,
+                                    destination: item.destination,
+                                    date: item.date,
+                                    carrier: 'QR',
+                                    flightNumber: item.flight,
+                                  },
+                                });
+                              }}
+                            >
+                              <MaterialCommunityIcons name="seat-passenger" size={18} color="#007AFF" />
+                              <Text style={styles.seatMapButtonText}>View Seat Map</Text>
+                            </TouchableOpacity>
                           </View>
                         </View>
                       </View>
@@ -851,5 +875,23 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '600',
     verticalAlign: 'top',
+  },
+  seatMapButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 122, 255, 0.3)',
+  },
+  seatMapButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#007AFF',
   },
 });

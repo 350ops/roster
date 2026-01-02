@@ -1,5 +1,4 @@
-import { NativeTabs, Icon, Label, VectorIcon } from 'expo-router/unstable-native-tabs';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { Icon, Label, NativeTabs } from 'expo-router/unstable-native-tabs';
 
 export default function TabLayout() {
   return (
@@ -10,6 +9,10 @@ export default function TabLayout() {
       <NativeTabs.Trigger name="index">
         <Icon sf={{ default: 'house', selected: 'house.fill' }} />
         <Label>Home</Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="search">
+        <Icon sf={{ default: 'magnifyingglass', selected: 'magnifyingglass.circle.fill' }} />
+        <Label>Search</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="explore">
         <Icon sf={{ default: 'map', selected: 'map.fill' }} />

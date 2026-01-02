@@ -3,7 +3,7 @@ import { MapView, Marker, Polyline } from '@/components/NativeMapView';
 import { AIRPORT_CITIES, AIRPORT_COORDINATES } from '@/constants/airports';
 import { useFlights } from '@/context/FlightContext';
 import { GlassView } from 'expo-glass-effect';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Dimensions, StyleSheet, Text, View } from 'react-native';
 
 export default function ExploreScreen() {
@@ -18,6 +18,12 @@ export default function ExploreScreen() {
   // Helper to get coordinates from either static list or dynamic fetch
   const getCoords = (code: string) => {
     return AIRPORT_COORDINATES[code] || dynamicCoords[code];
+  };
+
+  const zoomFromDelta = (latDelta: number, lonDelta: number) => {
+    const latZoom = Math.log2(360 / latDelta);
+    const lonZoom = Math.log2(360 / lonDelta);
+    return Math.max(2, Math.min(16, Math.min(latZoom, lonZoom)));
   };
 
   // Fetch missing coordinates
@@ -47,19 +53,66 @@ export default function ExploreScreen() {
   }, [flights]); // Run when flights change
 
   // Animate to selected destination when it changes
-  useEffect(() => {
-    if (selectedDestination && mapRef.current) {
+  const focusOnSelection = useCallback(() => {
+    if (!selectedDestination || !mapRef.current) return;
+
+    // Find a representative flight that involves the selected airport
+    const flight = flights.find(
+      (f) => f.origin === selectedDestination || f.destination === selectedDestination
+    );
+
+    const originCoords = flight ? getCoords(flight.origin) : undefined;
+    const destCoords = flight ? getCoords(flight.destination) : undefined;
+
+    if (originCoords && destCoords) {
+      const center = {
+        latitude: (originCoords.latitude + destCoords.latitude) / 2,
+        longitude: (originCoords.longitude + destCoords.longitude) / 2,
+      };
+      const latDelta = Math.max(Math.abs(originCoords.latitude - destCoords.latitude) * 1.6, 0.2);
+      const lonDelta = Math.max(Math.abs(originCoords.longitude - destCoords.longitude) * 1.6, 0.2);
+      const targetZoom = zoomFromDelta(latDelta, lonDelta);
+
+      // Phase 1: ease out to frame full path with light pitch
+      mapRef.current.animateCamera(
+        {
+          center,
+          zoom: targetZoom,
+          pitch: 24,
+        },
+        { duration: 2000 }
+      );
+
+      // Phase 2: then zoom in toward destination and tilt down for more path depth
+      setTimeout(() => {
+        mapRef.current?.animateCamera(
+          {
+            center: destCoords,
+            zoom: Math.min(targetZoom + 2.5, 17),
+            pitch: 55,
+          },
+          { duration: 1800 }
+        );
+      }, 1400);
+    } else {
       const coords = getCoords(selectedDestination);
       if (coords) {
-        mapRef.current.animateToRegion({
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-          latitudeDelta: 30,
-          longitudeDelta: 30,
-        }, 1000);
+        mapRef.current.animateToRegion(
+          {
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+            latitudeDelta: 30,
+            longitudeDelta: 30,
+          },
+          3000
+        );
       }
     }
-  }, [selectedDestination, dynamicCoords]);
+  }, [selectedDestination, flights, getCoords, dynamicCoords]);
+
+  useEffect(() => {
+    focusOnSelection();
+  }, [focusOnSelection]);
 
   // Clear selection when leaving
   useEffect(() => {
