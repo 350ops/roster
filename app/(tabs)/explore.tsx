@@ -16,9 +16,9 @@ export default function ExploreScreen() {
   const [dynamicCoords, setDynamicCoords] = useState<Record<string, { latitude: number; longitude: number }>>({});
 
   // Helper to get coordinates from either static list or dynamic fetch
-  const getCoords = (code: string) => {
+  const getCoords = useCallback((code: string) => {
     return AIRPORT_COORDINATES[code] || dynamicCoords[code];
-  };
+  }, [dynamicCoords]);
 
   const zoomFromDelta = (latDelta: number, lonDelta: number) => {
     const latZoom = Math.log2(360 / latDelta);
@@ -147,59 +147,69 @@ export default function ExploreScreen() {
             <View key={`${flight.date}-${index}`}>
               <Polyline
                 coordinates={[originCoords, destCoords]}
-                strokeColor="#007AFF"
-                strokeWidth={2}
+                strokeColor="#ffffff44"
+                strokeWidth={4}
                 geodesic={true}
               />
               <Marker
                 coordinate={originCoords}
-                pinColor="blue"
                 onPress={() => {
                   setInfoAirportCode(flight.origin);
                   setInfoModalVisible(true);
                 }}
-              />
-              <Marker
-                coordinate={destCoords}
-                pinColor="blue"
-                onPress={() => {
-                  setInfoAirportCode(flight.destination);
-                  setInfoModalVisible(true);
-                }}
-              />
+              >
+                <View style={{
+                  backgroundColor: '#fff',
+                  borderRadius: 10,
+                  paddingHorizontal: 5,
+                  paddingVertical: 6,
+                  borderWidth: 2,
+                  borderColor: '#fff',
+                }}>
+                  <Text style={{
+                    fontSize: 8,
+                    fontWeight: 'normal',
+                    color: '#00599eff'
+                  }}>
+                    {flight.origin}
+                  </Text>
+                </View>
+              </Marker>
             </View>
           );
         })}
-      </MapView>
+      </MapView >
+      {
+        selectedDestination && (
+          <GlassView style={styles.infoCard}>
+            <Text style={styles.infoTitle}>
+              {AIRPORT_CITIES[selectedDestination] || selectedDestination}
+            </Text>
+            <Text style={styles.infoSubtitle}>
+              {(() => {
+                const count = flights.filter(f => f.destination === selectedDestination || f.origin === selectedDestination).length;
+                return `${count} ${count === 1 ? 'Flight' : 'Flights'}`;
+              })()}
+            </Text>
+          </GlassView>
+        )
+      }
 
-      {/* Selected Destination Info */}
-      {selectedDestination && (
-        <GlassView style={styles.infoCard}>
-          <Text style={styles.infoTitle}>
-            {AIRPORT_CITIES[selectedDestination] || selectedDestination}
-          </Text>
-          <Text style={styles.infoSubtitle}>
-            {(() => {
-              const count = flights.filter(f => f.destination === selectedDestination || f.origin === selectedDestination).length;
-              return `${count} ${count === 1 ? 'Flight' : 'Flights'}`;
-            })()}
-          </Text>
-        </GlassView>
-      )}
-
-      {flights.length === 0 && (
-        <GlassView style={styles.overlay}>
-          <Text style={styles.overlayText}>No flights to display.</Text>
-          <Text style={styles.overlaySubtext}>Upload a PDF in the Home tab.</Text>
-        </GlassView>
-      )}
+      {
+        flights.length === 0 && (
+          <GlassView style={styles.overlay}>
+            <Text style={styles.overlayText}>No flights to display.</Text>
+            <Text style={styles.overlaySubtext}>Upload a PDF in the Home tab.</Text>
+          </GlassView>
+        )
+      }
 
       <AirportInfoModal
         visible={infoModalVisible}
         airportCode={infoAirportCode}
         onClose={() => setInfoModalVisible(false)}
       />
-    </View>
+    </View >
   );
 }
 

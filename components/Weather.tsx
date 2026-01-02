@@ -110,8 +110,10 @@ function n(num: number): number {
 
 export function Weather({
     weatherAtLocation = SAMPLE,
+    forceDarkMode = false,
 }: {
     weatherAtLocation?: WeatherAtLocation;
+    forceDarkMode?: boolean;
 }) {
     const currentHigh = Math.max(
         ...weatherAtLocation.hourly.temperature_2m.slice(0, 24)
@@ -143,9 +145,9 @@ export function Weather({
         weatherAtLocation.cityName ||
         `${weatherAtLocation.latitude?.toFixed(1)}°, ${weatherAtLocation.longitude?.toFixed(1)}°`;
 
-    const bgColors: [string, string, ...string[]] = isDay
-        ? ["#38bdf8", "#3b82f6", "#2563eb"]
-        : ["#312e81", "#581c87", "#0f172a"];
+    const bgColors: [string, string, ...string[]] = (forceDarkMode || !isDay)
+        ? ["#0091ffff", "#00599eff", "#0f172a"]
+        : ["#38bdf8", "#3b82f6", "#2563eb"];
 
     return (
         <View
@@ -167,9 +169,9 @@ export function Weather({
                 <View style={styles.mainInfo}>
                     <View style={styles.currentWeather}>
                         <Ionicons
-                            name={isDay ? "sunny" : "moon"}
+                            name={isDay && !forceDarkMode ? "sunny" : "moon"}
                             size={48}
-                            color={isDay ? "#fef08a" : "#bfdbfe"}
+                            color={(isDay && !forceDarkMode) ? "#fef08a" : "#bfdbfe"}
                         />
                         <View>
                             <Text style={styles.tempText}>
@@ -222,7 +224,7 @@ export function Weather({
                                         <Ionicons
                                             name="cloud"
                                             size={16}
-                                            color={isDay ? "#fef08a" : "#bfdbfe"}
+                                            color={(isDay && !forceDarkMode) ? "#fef08a" : "#bfdbfe"}
                                         />
                                         <Text style={styles.forecastTemp}>
                                             {n(displayTemperatures[index])}°

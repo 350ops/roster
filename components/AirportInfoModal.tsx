@@ -1,10 +1,10 @@
+import GlassView from '@/components/GlassView';
 import { RunwayCarousel } from '@/components/RunwayCarousel';
 import { Weather, WeatherAtLocation } from '@/components/Weather';
-import { AIRPORT_COORDINATES, AIRPORT_ICAO, AIRPORT_INFO } from '@/constants/airports';
+import { AIRPORT_CITIES, AIRPORT_COORDINATES, AIRPORT_ICAO, AIRPORT_INFO } from '@/constants/airports';
 import { getAirportDetails } from '@/tools/airport';
 import { getWeather } from '@/tools/weather';
 import { Ionicons } from '@expo/vector-icons';
-import { GlassView } from 'expo-glass-effect';
 import { Image } from 'expo-image';
 import React, { useEffect, useState } from 'react';
 import {
@@ -107,17 +107,17 @@ export default function AirportInfoModal({ visible, airportCode, onClose }: Airp
             onRequestClose={onClose}
         >
             <View style={styles.centeredView}>
-                <GlassView style={styles.modalView}>
+                <GlassView style={styles.modalView} tint="dark" intensity={90}>
                     <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                        <Ionicons name="close-circle" size={32} color="#111" />
+                        <Ionicons name="close-circle" size={32} color="#fff" />
                     </TouchableOpacity>
 
                     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-                        <Text style={styles.airportCode}>{airportCode}</Text>
+                        <Text style={styles.airportCode}>{AIRPORT_CITIES[airportCode] || airportCode}</Text>
 
                         {weatherData && (
                             <View style={styles.weatherSection}>
-                                <Weather weatherAtLocation={weatherData} />
+                                <Weather weatherAtLocation={weatherData} forceDarkMode={true} />
                             </View>
                         )}
 
@@ -131,13 +131,6 @@ export default function AirportInfoModal({ visible, airportCode, onClose }: Airp
                                     } : undefined
                                 }))}
                             />
-                        )}
-
-                        {!loadingAirport && airportDetails?.error && (
-                            <View style={styles.errorCard}>
-                                <Ionicons name="information-circle-outline" size={24} color="#555" />
-                                <Text style={styles.errorText}>Detailed airport info currently unavailable (requires valid API token).</Text>
-                            </View>
                         )}
 
                         {info ? (
@@ -217,7 +210,7 @@ export default function AirportInfoModal({ visible, airportCode, onClose }: Airp
                                 }}
                             >
                                 <View style={styles.closeBtnBackground}>
-                                    <Ionicons name="close" size={34} color="#FFF" />
+                                    <Ionicons name="close" size={34} color="#171717ff" />
                                 </View>
                             </TouchableOpacity>
                         </SafeAreaView>
@@ -264,17 +257,17 @@ const styles = StyleSheet.create({
         paddingTop: 10,
     },
     airportCode: {
-        fontSize: 42,
-        fontWeight: '800',
-        color: '#111',
-        letterSpacing: 2,
+        fontSize: 24,
+        fontWeight: 'normal',
+        color: '#fff',
+        letterSpacing: 0.5,
         marginBottom: 16,
         textAlign: 'center',
     },
     description: {
         fontSize: 17,
         lineHeight: 24,
-        color: '#333',
+        color: '#ccc',
         marginBottom: 24,
         textAlign: 'center',
     },
@@ -309,7 +302,7 @@ const styles = StyleSheet.create({
     },
     noInfo: {
         fontSize: 16,
-        color: '#666',
+        color: '#999',
         textAlign: 'center',
         marginTop: 20,
         fontStyle: 'italic',
@@ -382,7 +375,7 @@ const styles = StyleSheet.create({
     },
     errorText: {
         flex: 1,
-        color: '#666',
+        color: '#ccc',
         fontSize: 13,
         lineHeight: 18,
     },
