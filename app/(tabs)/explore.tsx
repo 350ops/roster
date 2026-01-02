@@ -1,6 +1,6 @@
 import AirportInfoModal from '@/components/AirportInfoModal';
 import { MapView, Marker, Polyline } from '@/components/NativeMapView';
-import { AIRPORT_COORDINATES } from '@/constants/airports';
+import { AIRPORT_CITIES, AIRPORT_COORDINATES } from '@/constants/airports';
 import { useFlights } from '@/context/FlightContext';
 import { GlassView } from 'expo-glass-effect';
 import { useEffect, useRef, useState } from 'react';
@@ -100,7 +100,6 @@ export default function ExploreScreen() {
               />
               <Marker
                 coordinate={originCoords}
-                title={flight.origin}
                 pinColor="blue"
                 onPress={() => {
                   setInfoAirportCode(flight.origin);
@@ -109,7 +108,6 @@ export default function ExploreScreen() {
               />
               <Marker
                 coordinate={destCoords}
-                title={flight.destination}
                 pinColor="blue"
                 onPress={() => {
                   setInfoAirportCode(flight.destination);
@@ -124,9 +122,14 @@ export default function ExploreScreen() {
       {/* Selected Destination Info */}
       {selectedDestination && (
         <GlassView style={styles.infoCard}>
-          <Text style={styles.infoTitle}>{selectedDestination}</Text>
+          <Text style={styles.infoTitle}>
+            {AIRPORT_CITIES[selectedDestination] || selectedDestination}
+          </Text>
           <Text style={styles.infoSubtitle}>
-            {flights.filter(f => f.destination === selectedDestination || f.origin === selectedDestination).length} flight(s)
+            {(() => {
+              const count = flights.filter(f => f.destination === selectedDestination || f.origin === selectedDestination).length;
+              return `${count} ${count === 1 ? 'Flight' : 'Flights'}`;
+            })()}
           </Text>
         </GlassView>
       )}
@@ -160,19 +163,20 @@ const styles = StyleSheet.create({
     top: 60,
     left: 20,
     right: 20,
-    padding: 16,
-    borderRadius: 16,
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+    borderRadius: 18,
     alignItems: 'center',
   },
   infoTitle: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: 30,
+    fontWeight: '800',
     color: '#111',
   },
   infoSubtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 4,
+    fontSize: 20,
+    color: '#444',
+    marginTop: 6,
   },
   overlay: {
     position: 'absolute',
